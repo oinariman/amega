@@ -3,13 +3,16 @@
 // @description ameblo gazou wo anatani...
 // @include http://ameblo.jp/*
 // @include http://*.jugem.jp/*
-// @version 0.0.2
+// @include http://blog.oricon.co.jp/*
+// @version 0.0.3
 // ==/UserScript==
 
 /*** location ***/
 
-function isAmeblo() { return /^http:\/\/ameblo\.jp\/.*$/.test(document.location.href); }
-function isJugem() { return /^http:\/\/.+\.jugem\.jp\/.*$/.test(document.location.href); }
+function isAmeblo() { return /^http:\/\/ameblo\.jp\/.*/.test(document.location.href); }
+function isJugem() { return /^http:\/\/.+\.jugem\.jp\/.*/.test(document.location.href); }
+function isBlog() { return /^http:\/\/blog\.oricon\.co\.jp\/.*/.test(document.location.href); }
+function isJpg() { return /\.jpg$/.test(document.location.href); }
 
 /*** html ***/
 
@@ -77,6 +80,16 @@ function fetchFromJugem() {
     return result;
 }
 
+function fetchFromUmanohone() {
+    var result = new Array();
+    var imgs = document.evaluate('//img[contains(@src,".jpg")]', document.body, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+    for (var i = 0; i < imgs.snapshotLength; i++) {
+        var url = imgs.snapshotItem(i).getAttribute('src');
+        result.push({url:url, aurl:url});
+    }
+    return result;
+}
+
 var fetch = function() {
     // fetch
     var anchors;
@@ -84,6 +97,8 @@ var fetch = function() {
         anchors = fetchFromAmeblo();
     } else if (isJugem()) {
         anchors = fetchFromJugem();
+    } else {
+        anchors = fetchFromUmanohone();
     }
 
     // count
@@ -122,7 +137,6 @@ function appendTriggerToAmeblo() {
 }
 
 function appendTriggerToJugem() {
-    GM_log('jugem');
     var trigA = document.createElement('a');
     trigA.innerHTML = 'ここを押す';
     trigA.href = 'javascript:void(0)';
@@ -132,7 +146,6 @@ function appendTriggerToJugem() {
     }
     
     var div = document.createElement("div")
-    div.setAttribute('id', 'amega_button')
     with (div.style) {
         fontSize   = '12px'
         position   = 'fixed'
@@ -149,5 +162,7 @@ function appendTriggerToJugem() {
 
 /*** main ***/
 
-if (isAmeblo()) { appendTriggerToAmeblo(); }
-else if (isJugem()) { appendTriggerToJugem(); }
+if (!isJpg()) {
+    if (isAmeblo()) { appendTriggerToAmeblo(); }
+    else if (isJugem() || isBlog()) { appendTriggerToJugem(); }
+}
