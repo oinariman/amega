@@ -49,22 +49,35 @@ function getFooter() {
 /*** fetch ***/
 
 function fetchFromAmeblo() {
-    var result = new Array();
-    var xpathDec = (!/\/image/.test(document.location.href)) ? '[@class="detailOn"]' : '';
-    var anchors = document.evaluate('//a' + xpathDec, document.body, null, 6, null);
-    var imgs = document.evaluate('//a' + xpathDec + '/child::img', document.body, null, 6, null);
-    for (var i = 0; i < imgs.snapshotLength; i++) {
-        var url = imgs.snapshotItem(i).getAttribute('src');
-		if (/^http:\/\/.*\/\d+(\_s|).jpg/.test(url)) {
-			url = url.replace(/\_s\.jpg.*/, '.jpg');
-		}
-		else if (/^http:\/\/.*\/t\d+\_\d+\.jpg$/.test(url)) {
-			url = url.replace(/t\d+\_/, 'o');
-		}
-        var aurl = anchors.snapshotItem(i).getAttribute('href');
-        result.push({url: url, aurl: aurl});
+    if (/\/image/.test(document.location.href)) {
+        GM_log("kekkyoku umanohone");
+        return fetchFromUmanohone();
+    } else {
+        var result = new Array();
+        var imgs = document.evaluate('//div[@class="contents"]//img', document.body, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+        for (var i = 0; i < imgs.snapshotLength; i++) {
+            var url = imgs.snapshotItem(i).getAttribute('src');
+            if (/\.jpg/.test(url)) {
+                if (/^http:\/\/.*\/\d+(\_s|).jpg/.test(url)) {
+                    url = url.replace(/\_s\.jpg.*/, '.jpg');
+                }
+                else if (/^http:\/\/.*\/t\d+\_\d+\.jpg$/.test(url)) {
+                    url = url.replace(/t\d+\_/, 'o');
+                }
+                var aurl;
+                // imgの親がaで、htmlへ参照してればその通りにする。
+                // そうでなければうんじゃらけ
+                var parent = imgs.snapshotItem(i).parentNode;
+                if (parent.nodeName.toLowerCase() == 'a' && /\.html/.test(parent.href)) {
+                    aurl = parent.href;
+                } else {
+                    aurl = url;
+                }
+                result.push({url: url, aurl: aurl});
+            }
+        }
+        return result;
     }
-    return result;
 }
 
 function fetchFromJugem() {
