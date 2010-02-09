@@ -4,7 +4,7 @@
 // @include http://ameblo.jp/*
 // @include http://*.jugem.jp/*
 // @include http://blog.oricon.co.jp/*
-// @version 0.0.3
+// @version 0.0.4
 // ==/UserScript==
 
 /*** location ***/
