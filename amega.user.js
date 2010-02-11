@@ -5,7 +5,7 @@
 // @include http://*.jugem.jp/*
 // @include http://blog.oricon.co.jp/*
 // @include http://bbs.avi.jp/bbs.php*
-// @version 0.0.5
+// @version 0.0.5.1
 // ==/UserScript==
 
 /*** location ***/
@@ -102,15 +102,7 @@ function fetchFromAviBbs() {
         var url = imgs.snapshotItem(i).getAttribute('src');
 		if (/^http:\/\/.*\/photo\/.*\.jpg$/.test(url)) {
 			url = url.replace(/\.jpg$/, '-pc.jpg');
-            // imgの親がaで、詳細ページへ参照してればその通りにする。
-            // そうでなければうんじゃらけ
-            var parent = imgs.snapshotItem(i).parentNode;
-            if (parent.nodeName.toLowerCase() == 'a') {
-                aurl = parent.href;
-            } else {
-                aurl = url;
-            }
-            result.push({url: url, aurl: aurl});
+            result.push({url: url, aurl: url});
 		}
     }
     return result;
