@@ -4,6 +4,7 @@
 // @include http://ameblo.jp/*
 // @include http://*.jugem.jp/*
 // @include http://blog.oricon.co.jp/*
+// @include http://bbs.avi.jp/bbs.php*
 // @version 0.0.4
 // ==/UserScript==
 
@@ -12,6 +13,7 @@
 function isAmeblo() { return /^http:\/\/ameblo\.jp\/.*/.test(document.location.href); }
 function isJugem() { return /^http:\/\/.+\.jugem\.jp\/.*/.test(document.location.href); }
 function isBlog() { return /^http:\/\/blog\.oricon\.co\.jp\/.*/.test(document.location.href); }
+function isAviBbs() { return /^http:\/\/bbs\.avi\.jp\/bbs\.php.*/.test(document.location.href); }
 function isJpg() { return /\.jpg$/.test(document.location.href); }
 
 /*** html ***/
@@ -93,6 +95,27 @@ function fetchFromJugem() {
     return result;
 }
 
+function fetchFromAviBbs() {
+    var result = new Array();
+    var imgs = document.evaluate('//td[@class="contributionimages"]//img', document.body, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+    for (var i = 0; i < imgs.snapshotLength; i++) {
+        var url = imgs.snapshotItem(i).getAttribute('src');
+		if (/^http:\/\/.*\/photo\/.*\.jpg$/.test(url)) {
+			url = url.replace(/\.jpg$/, '-pc.jpg');
+            // imgの親がaで、詳細ページへ参照してればその通りにする。
+            // そうでなければうんじゃらけ
+            var parent = imgs.snapshotItem(i).parentNode;
+            if (parent.nodeName.toLowerCase() == 'a') {
+                aurl = parent.href;
+            } else {
+                aurl = url;
+            }
+            result.push({url: url, aurl: aurl});
+		}
+    }
+    return result;
+}
+
 function fetchFromUmanohone() {
     var result = new Array();
     var imgs = document.evaluate('//img[contains(@src,".jpg")]', document.body, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -110,6 +133,8 @@ var fetch = function() {
         anchors = fetchFromAmeblo();
     } else if (isJugem()) {
         anchors = fetchFromJugem();
+    } else if (isAviBbs()) {
+        anchors = fetchFromAviBbs();
     } else {
         anchors = fetchFromUmanohone();
     }
@@ -177,5 +202,5 @@ function appendTriggerToJugem() {
 
 if (!isJpg()) {
     if (isAmeblo()) { appendTriggerToAmeblo(); }
-    else if (isJugem() || isBlog()) { appendTriggerToJugem(); }
+    else if (isJugem() || isAviBbs() || isBlog()) { appendTriggerToJugem(); }
 }
