@@ -5,7 +5,7 @@
 // @include http://*.jugem.jp/*
 // @include http://blog.oricon.co.jp/*
 // @include http://bbs.avi.jp/bbs.php*
-// @version 0.0.4
+// @version 0.0.5
 // ==/UserScript==
 
 /*** location ***/
