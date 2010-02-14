@@ -5,7 +5,8 @@
 // @include http://*.jugem.jp/*
 // @include http://blog.oricon.co.jp/*
 // @include http://bbs.avi.jp/bbs.php*
-// @version 0.0.5.1
+// @include http://blog.watanabepro.co.jp/*
+// @version 0.0.6
 // ==/UserScript==
 
 /*** location ***/
@@ -14,6 +15,7 @@ function isAmeblo() { return /^http:\/\/ameblo\.jp\/.*/.test(document.location.h
 function isJugem() { return /^http:\/\/.+\.jugem\.jp\/.*/.test(document.location.href); }
 function isBlog() { return /^http:\/\/blog\.oricon\.co\.jp\/.*/.test(document.location.href); }
 function isAviBbs() { return /^http:\/\/bbs\.avi\.jp\/bbs\.php.*/.test(document.location.href); }
+function isNabeblo() { return /^http:\/\/blog\.watanabepro\.co\.jp\/.*/.test(document.location.href); }
 function isJpg() { return /\.jpg$/.test(document.location.href); }
 
 /*** html ***/
@@ -48,11 +50,18 @@ function getFooter() {
     return html;
 }
 
+function getBody(hitStr, anchors) {
+    var html = '<p><span>' + hitStr + '</span>&nbsp;' + document.location.href + '</p><p>';
+    for (var k = 0; k < anchors.length; k++) {
+        html += '<a href="' + anchors[k].aurl + '"><img src="' + anchors[k].url + '"/></a>';
+    }
+    return html + '</p>';
+}
+
 /*** fetch ***/
 
 function fetchFromAmeblo() {
     if (/\/image/.test(document.location.href)) {
-        GM_log("kekkyoku umanohone");
         return fetchFromUmanohone();
     } else {
         var result = new Array();
@@ -108,6 +117,22 @@ function fetchFromAviBbs() {
     return result;
 }
 
+
+function fetchFromNabeblo() {
+    var result = new Array();
+    var imgs = document.evaluate('//div[@class="entry"]//img', document.body, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
+    for (var i = 0; i < imgs.snapshotLength; i++) {
+        var src = imgs.snapshotItem(i).getAttribute('src');
+		src.match(/src=(http:\/\/.*\.jpg).*$/);
+        url = RegExp.$1;
+        GM_log(RegExp.$1);
+        if (url.length > 0) {
+            result.push({url: url, aurl: url});
+		}
+    }
+    return result;
+}
+
 function fetchFromUmanohone() {
     var result = new Array();
     var imgs = document.evaluate('//img[contains(@src,".jpg")]', document.body, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
@@ -127,6 +152,8 @@ var fetch = function() {
         anchors = fetchFromJugem();
     } else if (isAviBbs()) {
         anchors = fetchFromAviBbs();
+    } else if (isNabeblo()) {
+        anchors = fetchFromNabeblo();
     } else {
         anchors = fetchFromUmanohone();
     }
@@ -137,14 +164,16 @@ var fetch = function() {
     
     // write
     var html = '';
-    html += getHeader(hitStr) + '<p><span>' + hitStr + '</span>&nbsp;' + document.location.href + '</p>';
-    for (var k = 0; k < anchors.length; k++) {
-        html += '<a href="' + anchors[k].aurl + '"><img src="' + anchors[k].url + '"/></a>';
-    }
-    html += getFooter();
+    if (!isNabeblo()) { html += getHeader(hitStr); }
+    html += getBody(hitStr, anchors);
+    if (!isNabeblo()) { html += getFooter(); }
     
     // display
-    GM_openInTab('data:text/html;charset=UTF-8,' + encodeURIComponent(html));
+    if (isNabeblo()) {
+        document.body.innerHTML = html;
+    } else {
+        GM_openInTab('data:text/html;charset=UTF-8,' + encodeURIComponent(html));
+    }
     return true;
 };
 
@@ -194,5 +223,5 @@ function appendTriggerToJugem() {
 
 if (!isJpg()) {
     if (isAmeblo()) { appendTriggerToAmeblo(); }
-    else if (isJugem() || isAviBbs() || isBlog()) { appendTriggerToJugem(); }
+    else if (isJugem() || isAviBbs() || isNabeblo() || isBlog()) { appendTriggerToJugem(); }
 }
